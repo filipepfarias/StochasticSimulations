@@ -1,3 +1,6 @@
+## Boltzmann Distribution by Gas Simulation
+## Source: https://github.com/lukepolson/youtube_channel/blob/main/Python%20GPU/multibody_boltzmann.ipynb
+
 using GLMakie
 using LinearAlgebra
 
