@@ -4,7 +4,7 @@
 using GLMakie
 using LinearAlgebra
 
-n_particles = 1024;
+n_particles = 2048;
 
 box = (0,1,0,1);
 
@@ -81,4 +81,4 @@ function gas_motion(r::Observable, v, i_pairs, ts, dt, d_cutoff)
     
 end
 
-gas_motion(Observable(r),v,i_pairs,1000,1e-5,2radius)
+gas_motion(Observable(r),v,i_pairs,1000,8e-6,2radius)
