@@ -15,14 +15,6 @@ i_r_l = r[:,1] .<= .5;
 
 i_r = 1:n_particles;
 
-# f = Figure();
-# ax = Axis(f[1,1], limits = box);
-
-# scatter!(ax,r[i_r_r,1],r[i_r_r,2])
-# scatter!(ax,r[i_r_l,1],r[i_r_l,2])
-
-# f
-
 # Setting velocities
 v = zero(r);
 v[i_r_r,1] .= -500;
@@ -31,14 +23,8 @@ v[i_r_l,1] .=  500;
 # Calculating distances
 i_pairs = vcat([[x y] for x in i_r for y in x+1:n_particles]...,)
 
-# Δx = r[i_pairs[:,1],1] - r[i_pairs[:,2],1];
-# Δy = r[i_pairs[:,1],2] - r[i_pairs[:,2],2];
-
-# d = .√(Δx.^2 + Δy.^2)
-
 # Verifying collision
-radius = 0.005;
-# i_collide = i_pairs[d .< 2radius,:]
+radius = 0.0005;
 
 # Calculating new velocities
 function update_v(v,r,i)
@@ -88,13 +74,11 @@ function gas_motion(r::Observable, v, i_pairs, ts, dt, d_cutoff)
 
         r[] += v .* dt;
         vo[] = v;
-
-        # ax = Axis(f[1,1], limits = (0,1,0,1));
-        # scatter!(ax,@lift($r[i_r_r,1]),(@lift $r[i_r_r,2]))
-        # scatter!(ax,(@lift $r[i_r_l,1]),(@lift $r[i_r_l,2]))
         
         notify(r);
         notify(vo);
     end
     
 end
+
+gas_motion(Observable(r),v,i_pairs,1000,1e-5,2radius)
