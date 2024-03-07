@@ -1,4 +1,3 @@
-using GLMakie
 using LinearAlgebra
 
 function verify_collision(v,r,r1,r2,i,n)
@@ -38,21 +37,8 @@ function update_velocity!(v,r,i,ic,m)
     @. v2 = v2 - m2 * (v_) ⋅ (r_) / norm(r_)^2 * (-r_)
 end
 
-# Settings
-begin
-    n_particles = 1024
-    dt = 1e-6;
-    box = (0.0,1.0,0.0,1.0);
-    v₀ = 500; # m/s
-    scale =  1e7 ;
-    r₂ = .005#2.8e-10 * scale # water 
-    r₁ = .05#27e-6 / 2 * 1e-3 *( 1e7 )# scalled polen
-    m₂ = 1#(4π/3 * r₂^3) * (0.997); #(volume m³) * (density kg/m³)
-    m₁ = 8#(4π/3 * r₁^3) * (1.435); #(volume m³) * (density kg/m³) http://www.jstor.org/stable/40586847
-end
-
 # Set initial conditions
-begin
+function init_brownian(n_particles::Int64,v₀::Float64)
     r = zeros(n_particles,2);
 
     r[1,:] = [.5 .5]; # Center colloid
@@ -74,43 +60,13 @@ begin
     end
     
     i_pairs = vcat([[x y] for x in 1:n_particles for y in x+1:n_particles]...,);
+
+    return r,v,i_pairs
 end;
 
-# For plotting
-begin
-    ro = Observable(r);
-    vo = Observable(v);
-    vom = Observable([0.0]);
-    rom = Observable([0.0]);
-    gm = Observable([0.0]);
-    
-    f = Figure(size=(1000,500));
-    ax = Axis(f[1:2,1], limits = box, aspect = 1);
-    ax2 = Axis(f[1,2], limits = (0,5000,0,0.01),  aspect = 1);
-    ax3 = Axis(f[2,2], limits = (-.025,.025,0,100),  aspect = 1);
-    
-    scatter!(ax,@lift($ro[1,1]),@lift($ro[1,2]),
-    marker=Circle,
-    markerspace=:data,
-    markersize=2r₁)
-    scatter!(ax,@lift($ro[2:end,1]),@lift($ro[2:end,2]),
-    marker=Circle,
-    markerspace=:data,
-    markersize=2r₂)
-    
-    
-    hist!(ax2,@lift( .√( sum(x -> x^2,$vo, dims=2) )[:] ); bins=50, normalization = :pdf)
-    hist!(ax3, @lift($gm[:]) ; bins=10, normalization = :pdf)
-    lines!(ax2,0:5000, v -> 2/v₀^2 * v * exp( - 2/v₀^2 * v^2 / 2), color=:black)
-    vlines!(ax2,@lift(n_particles\sum(norm.(eachrow($vo)))), color=:red)
-    vlines!(ax2,v₀, color=:black,)
-    f
-end
+function evolve_brownian!(r,v,dt,box,part_params)
+    m₁,r₁,m₂,r₂ = part_params;
 
-
-for fr in 1:10000
-    ic = verify_collision(v,r,r₁,r₂,i_pairs,n_particles);
-    
     update_velocity!(v,r,i_pairs,ic,[m₁,m₂]);
     
     inv_v = box[1]+r₁ .< r[1,1] .< box[2]-r₁;
@@ -122,24 +78,4 @@ for fr in 1:10000
     v[.!inv_v,2] .*= -1;
     
     r += v .* dt;
-    
-    
-    ro[] = r;
-    vo[] = v; 
-    if (vom[] .!== v[1,1])[1]
-        push!(gm[],r[1,1] - rom[][1]);  
-        vom[] .= [v[1,1]];
-        rom[] .= [r[1,1]];
-        # display(gm[])
-        # display(r[1,1] - rom[][end])
-    end
-    
-    notify(ro);
-    notify(vo);
-    notify(gm);
-    notify(rom)
-    notify(vom);
-    if fr%4 == 0
-    sleep(1e-100)    
-    end
 end
